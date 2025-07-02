@@ -9,3 +9,14 @@ function renderLoginForm(errorMessage = "") {
         <div class="error">${errorMessage}</div>
     </form>`
 }
+
+function renderProfile(userData) {
+    const app = document.getElementById("app");
+    app.innerHTML = `
+    <button id="logout-button">Logout</button>
+    `;
+    document.getElementById('logout-button').addEventListener('click', () => {
+        logout();
+        window.location.reload();
+    });
+}
