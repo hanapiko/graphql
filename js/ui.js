@@ -1,22 +1,22 @@
-import { logout } from './auth.js';
-import { drawXPLineChart, drawAuditPieChart } from './graphs.js';
+import { logout } from "./auth.js";
+import { drawXPLineChart, drawAuditPieChart } from "./graphs.js";
 
 function renderLoginForm(errorMessage = "") {
-    console.log("renderLoginForm called");
-    const app = document.getElementById("app");
-    app.innerHTML = `
+  console.log("renderLoginForm called");
+  const app = document.getElementById("app");
+  app.innerHTML = `
     <form id="login-form">
         <h2>Login</h2>
         <input type="text" id="login-username" placeholder="Username or Email" required>
         <input type="password" id="login-password" placeholder="Password" required>
         <button type="submit">Login</button>
         <div class="error">${errorMessage}</div>
-    </form>`
+    </form>`;
 }
 
 function renderProfile(userData) {
-    const app = document.getElementById("app");
-    app.innerHTML = `
+  const app = document.getElementById("app");
+  app.innerHTML = `
         <h2>Welcome, ${userData.login}!</h2>
         <ul>
             <li><strong>First Name:</strong> ${userData.firstName}</li>
@@ -36,13 +36,13 @@ function renderProfile(userData) {
         </div>
         <button id="logout-button">Logout</button>
     `;
-    document.getElementById('logout-button').addEventListener('click', () => {
-        logout();
-        window.location.reload();
-    });
+  document.getElementById("logout-button").addEventListener("click", () => {
+    logout();
+    window.location.reload();
+  });
 
-    drawXPLineChart(userData.xpTransactions);
-    drawAuditPieChart(userData.auditTransactions);
+  drawXPLineChart(userData.xpTransactions);
+  drawAuditPieChart(userData.auditTransactions);
 }
 
 export { renderLoginForm, renderProfile };
