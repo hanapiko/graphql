@@ -146,7 +146,7 @@ export function drawAuditPieChart(audits) {
     "path",
   );
   upSlice.setAttribute("d", upPath);
-  upSlice.setAttribute("fill", "#10b981");
+  upSlice.setAttribute("fill", "#6366f1"); // updated color
   svg.appendChild(upSlice);
 
   // Down slice
@@ -165,15 +165,15 @@ export function drawAuditPieChart(audits) {
     "path",
   );
   downSlice.setAttribute("d", downPath);
-  downSlice.setAttribute("fill", "#ef4444");
+  downSlice.setAttribute("fill", "#4338ca"); // updated to deep blue for visibility
   svg.appendChild(downSlice);
 
   // Add legend with counts
   const performedCount = audits.filter((a) => a.type === "up").length;
   const receivedCount = audits.filter((a) => a.type === "down").length;
   const legendData = [
-    { color: "#10b981", label: `Audits Performed (${performedCount})` },
-    { color: "#ef4444", label: `Audits Received (${receivedCount})` },
+    { color: "#6366f1", label: `Audits Performed (${performedCount})` },
+    { color: "#4338ca", label: `Audits Received (${receivedCount})` },   // updated to deep blue
   ];
   legendData.forEach((item, i) => {
     // Rectangle
