@@ -4,6 +4,9 @@ import {
   fetchUserInfo,
   fetchXPTransactions,
   fetchAuditTransactions,
+  fetchUserGrades,
+  fetchProjectProgress,
+  fetchProjectResults,
 } from "./api.js";
 
 function processXP(transactions) {
@@ -21,6 +24,17 @@ function processAudit(audits) {
   return downAudits > 0
     ? (upAudits / downAudits).toFixed(1)
     : upAudits.toFixed(1);
+}
+
+function processGrades(grades) {
+  if (!grades || grades.length === 0) return { total: 0, passed: 0, failed: 0, ratio: "0%" };
+  
+  const total = grades.length;
+  const passed = grades.filter(g => g.grade !== null && g.grade > 0).length;
+  const failed = grades.filter(g => g.grade === null || g.grade === 0).length;
+  const ratio = total > 0 ? ((passed / total) * 100).toFixed(1) + "%" : "0%";
+  
+  return { total, passed, failed, ratio };
 }
 
 async function checkAuthAndRender() {
@@ -71,10 +85,13 @@ async function renderUserProfile(token) {
   const userResult = await fetchUserInfo(token);
   if (userResult.success) {
     const user = userResult.user;
-    // Fetch XP and audits in parallel
-    const [xpResult, auditResult] = await Promise.all([
+    // Fetch XP, audits, grades, and projects in parallel
+    const [xpResult, auditResult, gradesResult, projectProgressResult, projectResultsResult] = await Promise.all([
       fetchXPTransactions(token, user.id),
       fetchAuditTransactions(token, user.id),
+      fetchUserGrades(token, user.id),
+      fetchProjectProgress(token, user.id),
+      fetchProjectResults(token, user.id),
     ]);
     // Process XP
     let xp = "--";
@@ -86,17 +103,52 @@ async function renderUserProfile(token) {
     // Process audits
     let auditRatio = "--";
     let auditTransactions = [];
+    let auditStats = { performed: 0, received: 0 };
     if (auditResult.success) {
       auditTransactions = auditResult.transactions;
       auditRatio = processAudit(auditTransactions);
+      
+      // Calculate audit statistics
+      const upAudits = auditTransactions.filter(a => a.type === "up").length;
+      const downAudits = auditTransactions.filter(a => a.type === "down").length;
+      auditStats = { performed: upAudits, received: downAudits };
     }
-    // Render profile with user info, XP, audit ratio, and raw transactions for graphs
+    // Process grades
+    let grades = { total: 0, passed: 0, failed: 0, ratio: "0%" };
+    if (gradesResult.success) {
+      grades = processGrades(gradesResult.grades);
+    }
+    // Process projects - try both sources
+    let projects = [];
+    if (projectProgressResult.success && projectProgressResult.projects.length > 0) {
+      projects = projectProgressResult.projects;
+      console.log("Using project progress data");
+    } else if (projectResultsResult.success && projectResultsResult.projects.length > 0) {
+      projects = projectResultsResult.projects;
+      console.log("Using project results data");
+    } else {
+      console.log("No project data found from either source");
+    }
+    
+    // Debug: Show all projects with their grades
+    console.log("=== ALL MODULE PROJECTS WITH GRADES ===");
+    projects.forEach((project, index) => {
+      const projectName = project.path.split('/').pop();
+      const status = project.grade === null ? "NULL (In Progress)" : 
+                    project.grade === 0 ? "FAILED" : 
+                    project.grade > 0 ? "PASSED" : "UNKNOWN";
+      console.log(`${index + 1}. ${projectName}: Grade ${project.grade} (${status})`);
+    });
+    
+    // Render profile with user info, XP, audit ratio, audit stats, and projects for graphs
     renderProfile({
       ...user,
       xp,
       auditRatio,
+      auditStats,
       xpTransactions,
       auditTransactions,
+      projects,
     });
   } else {
     logout();
