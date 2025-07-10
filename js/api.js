@@ -116,3 +116,165 @@ export async function fetchAuditTransactions(jwt, userId) {
     return { success: false, error: error.message };
   }
 }
+
+export async function fetchUserGrades(jwt, userId) {
+  const endpoint =
+    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
+  const query = `
+        query($userId: Int!) {
+            progress(
+                where: {
+                    userId: {_eq: $userId}
+                }
+            ) {
+                id
+                grade
+                createdAt
+                path
+                object {
+                    id
+                    name
+                    type
+                }
+            }
+        }
+    `;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ query, variables: { userId } }),
+    });
+    if (!response.ok) {
+      throw new Error("Unauthorized or network error");
+    }
+    const result = await response.json();
+    if (result.data && result.data.progress) {
+      // Filter for module grades only
+      const moduleGrades = result.data.progress.filter(p => 
+        p.path && 
+        p.path.includes("/module/")
+      );
+      console.log("Module grades found:", moduleGrades.length); // Debug log
+      return { success: true, grades: moduleGrades };
+    } else {
+      return { success: false, error: "No grades found" };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function fetchProjectProgress(jwt, userId) {
+  const endpoint =
+    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
+  const query = `
+        query($userId: Int!) {
+            progress(
+                where: {
+                    userId: {_eq: $userId}
+                }
+            ) {
+                id
+                grade
+                path
+                objectId
+                object {
+                    id
+                    name
+                    type
+                }
+            }
+        }
+    `;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ query, variables: { userId } }),
+    });
+    if (!response.ok) {
+      throw new Error("Unauthorized or network error");
+    }
+    const result = await response.json();
+    console.log("Project progress result:", result); // Debug log
+    
+    if (result.data && result.data.progress) {
+      // Filter for projects on the client side - only module projects
+      const projects = result.data.progress.filter(p => 
+        p.object && 
+        p.object.type === "project" && 
+        p.path && 
+        p.path.includes("/module/")
+      );
+      console.log("Filtered module projects:", projects); // Debug log
+      return { success: true, projects };
+    } else {
+      return { success: false, error: "No project progress found" };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function fetchProjectResults(jwt, userId) {
+  const endpoint =
+    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
+  const query = `
+        query($userId: Int!) {
+            result(
+                where: {
+                    userId: {_eq: $userId}
+                }
+            ) {
+                id
+                grade
+                type
+                path
+                objectId
+                object {
+                    id
+                    name
+                    type
+                }
+            }
+        }
+    `;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ query, variables: { userId } }),
+    });
+    if (!response.ok) {
+      throw new Error("Unauthorized or network error");
+    }
+    const result = await response.json();
+    console.log("Project results result:", result); // Debug log
+    
+    if (result.data && result.data.result) {
+      // Filter for projects on the client side - only module projects
+      const projects = result.data.result.filter(r => 
+        r.object && 
+        r.object.type === "project" && 
+        r.path && 
+        r.path.includes("/module/")
+      );
+      console.log("Filtered module project results:", projects); // Debug log
+      return { success: true, projects };
+    } else {
+      return { success: false, error: "No project results found" };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
