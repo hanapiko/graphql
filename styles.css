@@ -112,6 +112,13 @@ body {
   margin-bottom: 2px;
 }
 
+.info-card .info-subtitle {
+  font-size: 0.9rem;
+  color: #6366f1;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
 /* SVG Graphs Section */
 .statistics-section {
   display: flex;
