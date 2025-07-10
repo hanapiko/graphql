@@ -1,6 +1,7 @@
+// GraphQL API endpoint
+const GRAPHQL_ENDPOINT = "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
+
 export async function fetchUserInfo(jwt) {
-  const endpoint =
-    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
   const query = `
     query {
         user {
@@ -13,7 +14,7 @@ export async function fetchUserInfo(jwt) {
     }
     `;
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -39,8 +40,6 @@ export async function fetchUserInfo(jwt) {
 }
 
 export async function fetchXPTransactions(jwt, userId) {
-  const endpoint =
-    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
   const query = `
         query($userId: Int!) {
             transaction(
@@ -56,7 +55,7 @@ export async function fetchXPTransactions(jwt, userId) {
         }
     `;
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,8 +78,6 @@ export async function fetchXPTransactions(jwt, userId) {
 }
 
 export async function fetchAuditTransactions(jwt, userId) {
-  const endpoint =
-    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
   const query = `
         query($userId: Int!) {
             transaction(
@@ -95,7 +92,7 @@ export async function fetchAuditTransactions(jwt, userId) {
         }
     `;
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -118,8 +115,6 @@ export async function fetchAuditTransactions(jwt, userId) {
 }
 
 export async function fetchUserGrades(jwt, userId) {
-  const endpoint =
-    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
   const query = `
         query($userId: Int!) {
             progress(
@@ -140,7 +135,7 @@ export async function fetchUserGrades(jwt, userId) {
         }
     `;
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -169,8 +164,6 @@ export async function fetchUserGrades(jwt, userId) {
 }
 
 export async function fetchProjectProgress(jwt, userId) {
-  const endpoint =
-    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
   const query = `
         query($userId: Int!) {
             progress(
@@ -191,7 +184,7 @@ export async function fetchProjectProgress(jwt, userId) {
         }
     `;
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -224,8 +217,6 @@ export async function fetchProjectProgress(jwt, userId) {
 }
 
 export async function fetchProjectResults(jwt, userId) {
-  const endpoint =
-    "https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql";
   const query = `
         query($userId: Int!) {
             result(
@@ -247,7 +238,7 @@ export async function fetchProjectResults(jwt, userId) {
         }
     `;
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
