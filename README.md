@@ -1,4 +1,4 @@
-# GraphQL Profile Page
+# GraphQL
 
 A modern, responsive profile page built with vanilla JavaScript, HTML, and CSS, powered by the Zone01 GraphQL API. This project demonstrates authentication, querying, and SVG-based data visualization.
 
@@ -13,6 +13,9 @@ A modern, responsive profile page built with vanilla JavaScript, HTML, and CSS, 
 ## Demo
 ![Profile Page Screenshot](screenshot.png)
 
+## Live Demo
+🌐 **Live Site**: [View Live Demo](https://hanapiko.github.io/graphql/)
+
 ## Getting Started
 
 ### Prerequisites
@@ -23,7 +26,7 @@ A modern, responsive profile page built with vanilla JavaScript, HTML, and CSS, 
 1. **Clone or download this repository.**
 git clone 
 ```bash
-https://github.com/hanapiko/graphql.git
+https://learn.zone01kisumu.ke/git/hanapiko/graphql.git
 ```
 2. **Open `index.html` in your browser with liveserver.**
    - Or use a local server (recommended for module imports):
@@ -37,7 +40,7 @@ https://github.com/hanapiko/graphql.git
 ## Usage
 - **Login** with your username/email and password.
 - **View your profile**: See your name, email, XP, and audit ratio.
-- **Explore your journey**: Check out the XP progress line chart and audits pie chart.
+- **Explore your journey**: Check out the XP progress line chart and project status pie chart.
 - **Logout** using the button in the navbar.
 
 ## Project Structure
@@ -62,5 +65,5 @@ https://github.com/hanapiko/graphql.git
 - Built by hanapiko.
 - Powered by the [Zone01 GraphQL API](https://learn.zone01kisumu.ke/api/graphql-engine/v1/graphql).
 
-## License
-MIT
+## Contribution
+contributions are welcomed
