@@ -1,5 +1,5 @@
 import { logout } from './auth.js';
-import { drawXPLineChart, drawAuditPieChart } from './graphs.js';
+import { drawXPLineChart, drawProjectPassFailChart } from './graphs.js';
 
 function renderLoginForm(errorMessage = "") {
     console.log("renderLoginForm called");
@@ -37,6 +37,11 @@ function renderProfile(userData) {
                 <h4>Audit Ratio</h4>
                 <div class="info-value">${userData.auditRatio}</div>
             </div>
+            <div class="info-card">
+                <h4>Audits Performed</h4>
+                <div class="info-value">${userData.auditStats ? userData.auditStats.performed : '--'}</div>
+                <div class="info-subtitle">vs ${userData.auditStats ? userData.auditStats.received : '--'} received</div>
+            </div>
         </div>
         <div class="statistics-section">
             <div class="statistics-graph">
@@ -44,7 +49,7 @@ function renderProfile(userData) {
                 <svg id="xpChart" width="400" height="260"></svg>
             </div>
             <div class="statistics-graph">
-                <h4>Audits Performed vs Received</h4>
+                <h4>Projects Status: Passed, Failed & Ongoing</h4>
                 <svg id="auditChart" width="260" height="260"></svg>
             </div>
         </div>
@@ -55,7 +60,7 @@ function renderProfile(userData) {
     });
 
     drawXPLineChart(userData.xpTransactions);
-    drawAuditPieChart(userData.auditTransactions);
+    drawProjectPassFailChart(userData.projects);
 }
 
 export { renderLoginForm, renderProfile };
