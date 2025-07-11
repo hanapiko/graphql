@@ -372,16 +372,3 @@ form#login-form button[type='submit']:hover {
   font-style: italic;
   margin-top: 2px;
 }
-.info-skill-type {
-  color: #6366f1;
-  font-weight: 600;
-  margin-left: 8px;
-  margin-right: 8px;
-  font-size: 0.98rem;
-}
-.info-skill-grade {
-  color: #10b981;
-  font-weight: 700;
-  margin-left: 8px;
-  font-size: 0.98rem;
-}

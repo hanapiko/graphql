@@ -6,37 +6,8 @@ import {
   fetchAuditTransactions,
   fetchUserGrades,
   fetchProjectProgress,
-  fetchProjectResults,
-  fetchUserSkills, // <-- add this
+  fetchProjectResults
 } from "./api.js";
-
-function processXP(transactions) {
-  const totalXP = transactions.reduce((sum, t) => sum + t.amount, 0);
-  return (totalXP / 1000000).toFixed(2); // MB
-}
-
-function processAudit(audits) {
-  const upAudits = audits
-    .filter((a) => a.type === "up")
-    .reduce((sum, a) => sum + a.amount, 0);
-  const downAudits = audits
-    .filter((a) => a.type === "down")
-    .reduce((sum, a) => sum + Math.abs(a.amount), 0);
-  return downAudits > 0
-    ? (upAudits / downAudits).toFixed(1)
-    : upAudits.toFixed(1);
-}
-
-function processGrades(grades) {
-  if (!grades || grades.length === 0) return { total: 0, passed: 0, failed: 0, ratio: "0%" };
-  
-  const total = grades.length;
-  const passed = grades.filter(g => g.grade !== null && g.grade > 0).length;
-  const failed = grades.filter(g => g.grade === null || g.grade === 0).length;
-  const ratio = total > 0 ? ((passed / total) * 100).toFixed(1) + "%" : "0%";
-  
-  return { total, passed, failed, ratio };
-}
 
 async function checkAuthAndRender() {
   const token = localStorage.getItem("jwt");
@@ -55,13 +26,6 @@ async function checkAuthAndRender() {
         if (result.success) {
           const token = localStorage.getItem("jwt");
           await renderUserProfile(token);
-          // const userResult = await fetchUserInfo(token);
-          // if (userResult.success) {
-          //     renderProfile(userResult.user);
-          // } else {
-          //     // logout();
-          //     renderLoginForm("Session expired. Please log in again.");
-          // }
         } else {
           renderLoginForm(result.error);
         }
@@ -70,14 +34,6 @@ async function checkAuthAndRender() {
       console.log("Login form not found in DOM");
     }
   } else {
-    // const result = await fetchUserInfo(token);
-    // if (result.success) {
-    //     renderProfile(result.user);
-    // } else {
-    //     // Token invalid or expired, log out and show login form
-    //     logout();
-    //     renderLoginForm("Session expired. Please log in again.");
-    // }
     await renderUserProfile(token);
   }
 }
@@ -87,20 +43,19 @@ async function renderUserProfile(token) {
   if (userResult.success) {
     const user = userResult.user;
     // Fetch XP, audits, grades, projects, and skills in parallel
-    const [xpResult, auditResult, gradesResult, projectProgressResult, projectResultsResult, skillsResult] = await Promise.all([
+    const [xpResult, auditResult, gradesResult, projectProgressResult, projectResultsResult] = await Promise.all([
       fetchXPTransactions(token, user.id),
       fetchAuditTransactions(token, user.id),
       fetchUserGrades(token, user.id),
       fetchProjectProgress(token, user.id),
       fetchProjectResults(token, user.id),
-      fetchUserSkills(token, user.id), // <-- fetch skills
     ]);
     // Process XP
     let xp = "--";
     let xpTransactions = [];
     if (xpResult.success) {
       xpTransactions = xpResult.transactions;
-      xp = processXP(xpTransactions);
+      xp = (xpTransactions.reduce((sum, t) => sum + t.amount, 0) / 1000000).toFixed(2); // MB, 2 decimal places
     }
     // Process audits
     let auditRatio = "--";
@@ -108,17 +63,30 @@ async function renderUserProfile(token) {
     let auditStats = { performed: 0, received: 0 };
     if (auditResult.success) {
       auditTransactions = auditResult.transactions;
-      auditRatio = processAudit(auditTransactions);
-      
-      // Calculate audit statistics
-      const upAudits = auditTransactions.filter(a => a.type === "up").length;
-      const downAudits = auditTransactions.filter(a => a.type === "down").length;
-      auditStats = { performed: upAudits, received: downAudits };
+      // Restore previous audit ratio logic: sum of up amounts / sum of down amounts
+      const upAudits = auditTransactions
+        .filter((a) => a.type === "up")
+        .reduce((sum, a) => sum + a.amount, 0);
+      const downAudits = auditTransactions
+        .filter((a) => a.type === "down")
+        .reduce((sum, a) => sum + Math.abs(a.amount), 0);
+      auditRatio = downAudits > 0
+        ? (upAudits / downAudits).toFixed(1)
+        : "--";
+      auditStats = {
+        performed: auditTransactions.filter(a => a.type === "up").length,
+        received: auditTransactions.filter(a => a.type === "down").length
+      };
     }
     // Process grades
     let grades = { total: 0, passed: 0, failed: 0, ratio: "0%" };
     if (gradesResult.success) {
-      grades = processGrades(gradesResult.grades);
+      grades = {
+        total: gradesResult.grades.length,
+        passed: gradesResult.grades.filter(g => g.grade !== null && g.grade > 0).length,
+        failed: gradesResult.grades.filter(g => g.grade === null || g.grade === 0).length,
+        ratio: gradesResult.grades.length > 0 ? ((gradesResult.grades.filter(g => g.grade !== null && g.grade > 0).length / gradesResult.grades.length) * 100).toFixed(1) + "%" : "0%"
+      };
     }
     // Process projects - try both sources
     let projects = [];
@@ -142,12 +110,6 @@ async function renderUserProfile(token) {
       console.log(`${index + 1}. ${projectName}: Grade ${project.grade} (${status})`);
     });
     
-    // Process skills
-    let userSkills = [];
-    if (skillsResult && skillsResult.success) {
-      userSkills = skillsResult.skills;
-    }
-    
     // Render profile with user info, XP, audit ratio, audit stats, and projects for graphs
     renderProfile({
       ...user,
@@ -157,7 +119,6 @@ async function renderUserProfile(token) {
       xpTransactions,
       auditTransactions,
       projects,
-      userSkills, // <-- pass to UI
     });
   } else {
     logout();
