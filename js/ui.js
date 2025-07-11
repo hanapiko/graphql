@@ -1,5 +1,5 @@
 import { logout } from './auth.js';
-import { drawXPLineChart, drawProjectPassFailChart } from './graphs.js';
+import { drawXPLineChart, drawAuditRatioChart } from './graphs.js';
 
 function renderLoginForm(errorMessage = "") {
     console.log("renderLoginForm called");
@@ -49,8 +49,8 @@ function renderProfile(userData) {
                 <svg id="xpChart" width="400" height="260"></svg>
             </div>
             <div class="statistics-graph">
-                <h4>Projects Status: Passed, Failed & Ongoing</h4>
-                <svg id="auditChart" width="260" height="260"></svg>
+                <h4>Audit Ratio (Performed vs Received)</h4>
+                <svg id="auditChart" width="320" height="260"></svg>
             </div>
         </div>
     `;
@@ -60,7 +60,7 @@ function renderProfile(userData) {
     });
 
     drawXPLineChart(userData.xpTransactions);
-    drawProjectPassFailChart(userData.projects);
+    drawAuditRatioChart(userData.auditTransactions);
 }
 
 export { renderLoginForm, renderProfile };

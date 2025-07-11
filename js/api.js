@@ -269,3 +269,49 @@ export async function fetchProjectResults(jwt, userId) {
     return { success: false, error: error.message };
   }
 }
+
+export async function fetchUserSkills(jwt, userId) {
+  const query = `
+    query($userId: Int!) {
+      progress(
+        where: {userId: {_eq: $userId}, grade: {_gt: 0}},
+        order_by: {grade: desc},
+        limit: 3
+      ) {
+        grade
+        object {
+          name
+          type
+        }
+      }
+    }
+  `;
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ query, variables: { userId } }),
+    });
+    if (!response.ok) {
+      throw new Error("Unauthorized or network error");
+    }
+    const result = await response.json();
+    // console.log('fetchUserSkills result:', result); // DEBUG
+    if (result.data && result.data.progress) {
+      // Map to flat array: { name, type, grade }
+      const skills = result.data.progress.map(s => ({
+        name: s.object?.name || "",
+        type: s.object?.type || "",
+        grade: s.grade
+      }));
+      return { success: true, skills };
+    } else {
+      return { success: false, error: "No skills found" };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}

@@ -7,6 +7,7 @@ import {
   fetchUserGrades,
   fetchProjectProgress,
   fetchProjectResults,
+  fetchUserSkills, // <-- add this
 } from "./api.js";
 
 function processXP(transactions) {
@@ -85,13 +86,14 @@ async function renderUserProfile(token) {
   const userResult = await fetchUserInfo(token);
   if (userResult.success) {
     const user = userResult.user;
-    // Fetch XP, audits, grades, and projects in parallel
-    const [xpResult, auditResult, gradesResult, projectProgressResult, projectResultsResult] = await Promise.all([
+    // Fetch XP, audits, grades, projects, and skills in parallel
+    const [xpResult, auditResult, gradesResult, projectProgressResult, projectResultsResult, skillsResult] = await Promise.all([
       fetchXPTransactions(token, user.id),
       fetchAuditTransactions(token, user.id),
       fetchUserGrades(token, user.id),
       fetchProjectProgress(token, user.id),
       fetchProjectResults(token, user.id),
+      fetchUserSkills(token, user.id), // <-- fetch skills
     ]);
     // Process XP
     let xp = "--";
@@ -140,6 +142,12 @@ async function renderUserProfile(token) {
       console.log(`${index + 1}. ${projectName}: Grade ${project.grade} (${status})`);
     });
     
+    // Process skills
+    let userSkills = [];
+    if (skillsResult && skillsResult.success) {
+      userSkills = skillsResult.skills;
+    }
+    
     // Render profile with user info, XP, audit ratio, audit stats, and projects for graphs
     renderProfile({
       ...user,
@@ -149,6 +157,7 @@ async function renderUserProfile(token) {
       xpTransactions,
       auditTransactions,
       projects,
+      userSkills, // <-- pass to UI
     });
   } else {
     logout();

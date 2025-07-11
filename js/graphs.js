@@ -105,196 +105,129 @@ export function drawXPLineChart(transactions) {
   });
 }
 
-export function drawProjectPassFailChart(projects) {
+export function drawAuditRatioChart(auditTransactions) {
   const svg = document.getElementById("auditChart");
   svg.innerHTML = "";
-  
-  console.log("Projects data received:", projects); // Debug log
-  
-  if (!projects || projects.length === 0) {
-    console.log("No projects data available"); // Debug log
+
+  if (!auditTransactions || auditTransactions.length === 0) {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", 20);
+    text.setAttribute("y", 40);
+    text.setAttribute("font-size", "16");
+    text.setAttribute("fill", "#888");
+    text.textContent = "No audit data available.";
+    svg.appendChild(text);
     return;
   }
 
-  // Process project data - count unique projects with final grades
-  const projectMap = new Map();
-  
-  // First, let's sort projects by ID to see the chronological order
-  const sortedProjects = [...projects].sort((a, b) => a.id - b.id);
-  
-  console.log("Projects sorted by ID (chronological order):");
-  sortedProjects.forEach(p => {
-    console.log(`ID ${p.id}: ${p.path.split('/').pop()} - Grade ${p.grade}`);
-  });
-  
-  // Group projects by name to analyze attempts
-  const projectGroups = new Map();
-  sortedProjects.forEach(project => {
-    const projectName = project.path.split('/').pop();
-    if (!projectGroups.has(projectName)) {
-      projectGroups.set(projectName, []);
-    }
-    projectGroups.get(projectName).push(project);
-  });
-  
-  // For each project, determine the final status
-  projectGroups.forEach((attempts, projectName) => {
-    console.log(`\nAnalyzing ${projectName}:`);
-    attempts.forEach(attempt => {
-      console.log(`  ID ${attempt.id}: Grade ${attempt.grade}`);
-    });
-    
-    // Check if this project was ever failed (has any grade 0 attempts)
-    const hasFailedAttempts = attempts.some(attempt => attempt.grade === 0);
-    const hasNullAttempts = attempts.some(attempt => attempt.grade === null);
-    
-    console.log(`  Has failed attempts: ${hasFailedAttempts}`);
-    console.log(`  Has null attempts: ${hasNullAttempts}`);
-    
-    // Determine final status:
-    // - If project has any failed attempts (grade 0), mark as failed
-    // - If project has any null attempts and no failed attempts, mark as ongoing
-    // - Otherwise, mark as passed
-    let finalGrade;
-    if (hasFailedAttempts) {
-      finalGrade = 0; // Failed (even if later passed)
-      console.log(`  Final status: FAILED (was failed at least once)`);
-    } else if (hasNullAttempts) {
-      finalGrade = null; // Ongoing
-      console.log(`  Final status: ONGOING (has null grades)`);
-    } else {
-      finalGrade = 1; // Passed (all attempts were successful)
-      console.log(`  Final status: PASSED (all attempts successful)`);
-    }
-    
-    projectMap.set(projectName, finalGrade);
-  });
-  
-  // Convert map to array of unique projects with final grades
-  const uniqueProjects = Array.from(projectMap.entries()).map(([name, grade]) => ({
-    name,
-    grade,
-    path: `/kisumu/module/${name}`
-  }));
-  
-  console.log("Unique projects with best grades:", uniqueProjects);
-  
-  const passed = uniqueProjects.filter(p => p.grade !== null && p.grade > 0).length;
-  const failed = uniqueProjects.filter(p => p.grade === 0).length;
-  const ongoing = uniqueProjects.filter(p => p.grade === null).length;
-  const total = passed + failed + ongoing;
-  
-  // Detailed breakdown for debugging
-  const passedProjects = uniqueProjects.filter(p => p.grade !== null && p.grade > 0);
-  const failedProjects = uniqueProjects.filter(p => p.grade === 0);
-  const ongoingProjects = uniqueProjects.filter(p => p.grade === null);
-  
-  console.log("=== UNIQUE PROJECT BREAKDOWN ===");
-  console.log("PASSED projects:", passedProjects.map(p => ({ name: p.name, grade: p.grade })));
-  console.log("FAILED projects:", failedProjects.map(p => ({ name: p.name, grade: p.grade })));
-  console.log("ONGOING projects:", ongoingProjects.map(p => ({ name: p.name, grade: p.grade })));
-  console.log("Project stats - Passed:", passed, "Failed:", failed, "Ongoing:", ongoing, "Total:", total); // Debug log
-  
-  if (total === 0) {
-    console.log("No valid project grades found"); // Debug log
-    return;
-  }
+  // Count audits performed (up) and received (down)
+  const performed = auditTransactions.filter(a => a.type === "up").length;
+  const received = auditTransactions.filter(a => a.type === "down").length;
 
-  const width = svg.width.baseVal.value;
-  const height = svg.height.baseVal.value;
-  const margin = { top: 20, right: 30, bottom: 60, left: 60 };
-  const chartWidth = width - margin.left - margin.right;
-  const chartHeight = height - margin.top - margin.bottom;
-
-  // Data for the chart - three categories
+  // Chart data
   const data = [
-    { label: "Passed", value: passed, color: "#10b981" },
-    { label: "Failed", value: failed, color: "#ef4444" },
-    { label: "Ongoing", value: ongoing, color: "#3b82f6" }
+    { label: "Performed", value: performed, color: "#10b981" },
+    { label: "Received", value: received, color: "#6366f1" }
   ];
 
-  const maxValue = Math.max(passed, failed, ongoing);
-  const barWidth = (chartWidth - 80) / 3; // Space for 3 bars with gaps
-  const barSpacing = 40;
+  // Chart dimensions
+  const width = svg.width.baseVal.value;
+  const height = svg.height.baseVal.value;
+  const cx = width / 2;
+  const cy = height / 2;
+  const radius = Math.min(width, height) * 0.32;
 
-  // Draw bars
-  data.forEach((item, i) => {
-    const barHeight = maxValue > 0 ? (item.value / maxValue) * chartHeight : 0;
-    const x = margin.left + i * (barWidth + barSpacing);
-    const y = margin.top + chartHeight - barHeight;
+  // Calculate total
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  if (total === 0) {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", cx);
+    text.setAttribute("y", cy);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("font-size", "16");
+    text.setAttribute("fill", "#888");
+    text.textContent = "No audit data available.";
+    svg.appendChild(text);
+    return;
+  }
 
-    // Bar
-    const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bar.setAttribute("x", x);
-    bar.setAttribute("y", y);
-    bar.setAttribute("width", barWidth);
-    bar.setAttribute("height", barHeight);
-    bar.setAttribute("fill", item.color);
-    bar.setAttribute("rx", 4);
-    svg.appendChild(bar);
+  // Draw pie slices
+  let startAngle = 0;
+  data.forEach((item) => {
+    if (item.value === 0) return;
+    const sliceAngle = (item.value / total) * 2 * Math.PI;
+    const endAngle = startAngle + sliceAngle;
+    const x1 = cx + radius * Math.cos(startAngle);
+    const y1 = cy + radius * Math.sin(startAngle);
+    const x2 = cx + radius * Math.cos(endAngle);
+    const y2 = cy + radius * Math.sin(endAngle);
+    const largeArcFlag = sliceAngle > Math.PI ? 1 : 0;
+    const pathData = [
+      `M ${cx} ${cy}`,
+      `L ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      "Z"
+    ].join(" ");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathData);
+    path.setAttribute("fill", item.color);
+    svg.appendChild(path);
+    startAngle = endAngle;
+  });
 
-    // Value label on top of bar
-    const valueLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    valueLabel.setAttribute("x", x + barWidth / 2);
-    valueLabel.setAttribute("y", y - 8);
-    valueLabel.setAttribute("text-anchor", "middle");
-    valueLabel.setAttribute("font-size", "14");
-    valueLabel.setAttribute("font-weight", "bold");
-    valueLabel.setAttribute("fill", "#374151");
-    valueLabel.textContent = item.value;
-    svg.appendChild(valueLabel);
-
-    // Label below bar
+  // Add labels inside slices
+  startAngle = 0;
+  data.forEach((item) => {
+    if (item.value === 0) return;
+    const sliceAngle = (item.value / total) * 2 * Math.PI;
+    const midAngle = startAngle + sliceAngle / 2;
+    const labelRadius = radius * 0.65;
+    const lx = cx + labelRadius * Math.cos(midAngle);
+    const ly = cy + labelRadius * Math.sin(midAngle) + 5;
+    const percent = ((item.value / total) * 100).toFixed(0);
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.setAttribute("x", x + barWidth / 2);
-    label.setAttribute("y", margin.top + chartHeight + 20);
+    label.setAttribute("x", lx);
+    label.setAttribute("y", ly);
     label.setAttribute("text-anchor", "middle");
-    label.setAttribute("font-size", "12");
-    label.setAttribute("fill", "#6b7280");
+    label.setAttribute("font-size", "14");
+    label.setAttribute("fill", "#fff");
+    label.setAttribute("font-weight", "bold");
+    label.textContent = `${item.value} (${percent}%)`;
+    svg.appendChild(label);
+    startAngle += sliceAngle;
+  });
+
+  // Add chart title
+  const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  title.setAttribute("x", width / 2);
+  title.setAttribute("y", 28);
+  title.setAttribute("text-anchor", "middle");
+  title.setAttribute("font-size", "15");
+  title.setAttribute("font-weight", "bold");
+  title.setAttribute("fill", "#4338ca");
+  title.textContent = "Audit Ratio (Performed vs Received)";
+  svg.appendChild(title);
+
+  // Add legend
+  const legendX = width - 120;
+  const legendY = height - 60;
+  data.forEach((item, i) => {
+    // Color box
+    const box = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    box.setAttribute("x", legendX);
+    box.setAttribute("y", legendY + i * 24);
+    box.setAttribute("width", 18);
+    box.setAttribute("height", 18);
+    box.setAttribute("fill", item.color);
+    box.setAttribute("rx", 3);
+    svg.appendChild(box);
+    // Label
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", legendX + 26);
+    label.setAttribute("y", legendY + i * 24 + 14);
+    label.setAttribute("font-size", "13");
+    label.setAttribute("fill", "#374151");
     label.textContent = item.label;
     svg.appendChild(label);
   });
-
-  // Draw Y-axis
-  const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  yAxis.setAttribute("x1", margin.left);
-  yAxis.setAttribute("y1", margin.top);
-  yAxis.setAttribute("x2", margin.left);
-  yAxis.setAttribute("y2", margin.top + chartHeight);
-  yAxis.setAttribute("stroke", "#d1d5db");
-  yAxis.setAttribute("stroke-width", 1);
-  svg.appendChild(yAxis);
-
-  // Draw X-axis
-  const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  xAxis.setAttribute("x1", margin.left);
-  xAxis.setAttribute("y1", margin.top + chartHeight);
-  xAxis.setAttribute("x2", margin.left + chartWidth);
-  xAxis.setAttribute("y2", margin.top + chartHeight);
-  xAxis.setAttribute("stroke", "#d1d5db");
-  xAxis.setAttribute("stroke-width", 1);
-  svg.appendChild(xAxis);
-
-  // Add Y-axis labels
-  [0, maxValue].forEach((val, i) => {
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.setAttribute("x", margin.left - 10);
-    label.setAttribute("y", margin.top + chartHeight - (val / maxValue) * chartHeight + 5);
-    label.setAttribute("text-anchor", "end");
-    label.setAttribute("font-size", "12");
-    label.setAttribute("fill", "#6b7280");
-    label.textContent = val;
-    svg.appendChild(label);
-  });
-
-  // Add total projects info
-  const totalLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  totalLabel.setAttribute("x", width / 2);
-  totalLabel.setAttribute("y", height - 10);
-  totalLabel.setAttribute("text-anchor", "middle");
-  totalLabel.setAttribute("font-size", "12");
-  totalLabel.setAttribute("fill", "#374151");
-  totalLabel.setAttribute("font-weight", "bold");
-  totalLabel.textContent = `Total Projects: ${total}`;
-  svg.appendChild(totalLabel);
 }
