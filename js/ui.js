@@ -80,7 +80,7 @@ function renderProfile(userData) {
                 <svg id="xpChart" width="400" height="260"></svg>
             </div>
             <div class="statistics-graph">
-                <h4>Audit Ratio (Performed vs Received)</h4>
+                <h4>Audit Distribution</h4>
                 <svg id="auditChart" width="320" height="260"></svg>
             </div>
         </div>

@@ -63,7 +63,6 @@ async function renderUserProfile(token) {
     let auditStats = { performed: 0, received: 0 };
     if (auditResult.success) {
       auditTransactions = auditResult.transactions;
-      // Restore previous audit ratio logic: sum of up amounts / sum of down amounts
       const upAudits = auditTransactions
         .filter((a) => a.type === "up")
         .reduce((sum, a) => sum + a.amount, 0);
@@ -88,7 +87,7 @@ async function renderUserProfile(token) {
         ratio: gradesResult.grades.length > 0 ? ((gradesResult.grades.filter(g => g.grade !== null && g.grade > 0).length / gradesResult.grades.length) * 100).toFixed(1) + "%" : "0%"
       };
     }
-    // Process projects - try both sources
+    // Process projects
     let projects = [];
     if (projectProgressResult.success && projectProgressResult.projects.length > 0) {
       projects = projectProgressResult.projects;
@@ -100,7 +99,7 @@ async function renderUserProfile(token) {
       console.log("No project data found from either source");
     }
     
-    // Debug: Show all projects with their grades
+    //Show all projects with their grades
     console.log("=== ALL MODULE PROJECTS WITH GRADES ===");
     projects.forEach((project, index) => {
       const projectName = project.path.split('/').pop();
